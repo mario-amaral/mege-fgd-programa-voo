@@ -28,7 +28,7 @@ def get_area(P1, P2, P3, P4):
 
 # calculate flight plan
 
-def get_first_foto (area, orientation, h, S2, q):
+def get_first_foto (area, orientation, h, S2, q, B):
     """ Retorna: primeiro ponto de tomada de foto conforme a orientação de voo. 
         Recebe: area: foto de partida.
                 Orientation - deverá ser negativo para voo E-W e qualquer outro valor para voo W-E
@@ -36,9 +36,14 @@ def get_first_foto (area, orientation, h, S2, q):
                 S2 - comprimento da projeção da foto no solo (para determinação de F1_delta_y)
                 q - sobreposição vertical entre faixas (para determinação de F1_delta_y)
     """
-    F1_delta_y = S2 * (50. - q)/100. # distância entre a coordenada y da primeira foto e lado superior da area a levantar de modo a garantir uma margem de segurança de 50%-q
-    if orientation <0: return (1, area[1][0], area[1][1] - F1_delta_y, h) #caso orientação seja <0 (E-W), F1 toma a posição do vértice superior direito
-    return (1, area[0][0], area[0][1] - F1_delta_y, h) #caso orientação seja qualquer valor positivo (W-E), F1 toma a posição do vértice superior esquerdo
+    # F1_delta_y dá-nos a distância entre a coordenada y da primeira foto e lado superior da area a levantar de modo a garantir uma margem de segurança de 20% de S2
+    F1_delta_y = S2 * 0.3
+    
+    # F1_starting_x dá-nos a coordenada x de partida da primeira foto de modo a garantir é capturada uma foto a uma distância B do limite lateral da área a levantar
+    F1_starting_x = B
+    
+    if orientation <0: return (1, area[1][0] + F1_starting_x, area[1][1] - F1_delta_y, h) #caso orientação seja <0 (E-W), F1 toma a posição do vértice superior direito
+    return (1, area[0][0] - F1_starting_x, area[0][1] - F1_delta_y, h) #caso orientação seja qualquer valor positivo (W-E), F1 toma a posição do vértice superior esquerdo
     
 def get_next_foto_faixa (foto, A, B):
     """ Retorna: coordenadas da próxima foto numa fiada. 
@@ -73,11 +78,11 @@ def get_plan_fotos (area, orientation, cota_media, s1, s2, mf, pixel_size, focal
     L = abs(area[0][0] - area[1][0]) # Diferença entre coordenadas x dos vértices superiores da área a levantar  
     nm = int((L / B) + 1) # número de fotos na mesma fiada
     
-    fotos = [get_first_foto(area, orientation, h, S2, q)] #inicialização da lista de fotos, tendo a primeira foto calculada em função da área, orientação e altura. 
+    fotos = [get_first_foto(area, orientation, h, S2, q, B)] #inicialização da lista de fotos, tendo a primeira foto calculada em função da área, orientação e altura. 
     # Nota: Altura será igual para todas as fotos no bloco
     
-    for i in range(nfx): # loop para inserir pontos de captura de fotos em cada fiada 
-        for j in range(nm - 1): # loop para inserir pontos de captura de fotos entre fiadas 
+    for i in range(nfx): # loop para inserir pontos de captura de fotos em cada fiada, contando com duas fotos extra de segurança: uma antes do limite da área; uma após o limite da área. 
+        for j in range(nm + 1): # loop para inserir pontos de captura de fotos entre fiadas 
             if i%2 == 0: fotos.append(get_next_foto_faixa(fotos[-1], 0, orientation * B)) 
             if i%2 == 1: fotos.append(get_next_foto_faixa(fotos[-1], 0, - orientation * B)) #nas fiadas pares a orientação é invertida
         fotos.append(get_next_foto_faixa(fotos[-1], -A, 0))
@@ -108,10 +113,11 @@ def get_plan_budget(unit_cost_foto, unit_cost_flight_hour, flight_speed, s1, s2,
     L = abs(area[0][0] - area[1][0]) # Diferença entre coordenadas x dos vértices superiores da área a levantar  
     nm = int((L / B) + 1) # número de fotos na mesma fiada
     
-    # somamos: as nfx distâncias de B percorridas entre pontos de tomada de foto em cada fiada + 
+    # somamos: as (nfx + 2) distâncias de B percorridas entre pontos de tomada de foto em cada fiada + 
     # distância aproximada de mudança de faixa (dada pela semi-circunferência pi*A/2) para nfx-1 mudanças de faixa (valor em m) 
-    distance = nm * B * nfx + (np.pi/2.) * A * (nfx - 1)
+    distance = nm * B * (nfx) + (np.pi/2.) * A * (nfx - 1)
     
     time = distance / (flight_speed * 1000)
-    budget = nm * nfx * unit_cost_foto + time * unit_cost_flight_hour
+    budget = nm * (nfx) * unit_cost_foto + time * unit_cost_flight_hour
+    
     return (distance, time, budget)

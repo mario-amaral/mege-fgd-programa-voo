@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Oct 20 13:01:33 2022
+Created on Sun Oct 30 13:56:42 2022
 
 @author: mario
 """
@@ -9,13 +9,13 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasAgg
 import io
 
-import calc
 import cameras
 
-predef_cameras = cameras.get_camera_model_names()
-budget = 0
-flight_time = 0
-distance = 0
+predef_cameras_names = cameras.get_camera_model_names()
+
+budget = 0.
+flight_time = 0.
+distance = 0.
 
 def create_figure(area, fotos):
          
@@ -32,8 +32,8 @@ def create_figure(area, fotos):
         ax.plot(f[1], f[2], 'ro')
         ax.text(f[1], f[2], 'F' + str(f[0]), ha = "left")
         
-    ax.set_xlabel("E [m]")
-    ax.set_ylabel("N [m]")
+    ax.set_xlabel("UTM Zone S 29: Easting [m]")
+    ax.set_ylabel("UTM Zone S 29: Northing [m]")
         
     return fig
 
@@ -52,6 +52,25 @@ def draw_figure(element, figure):
     buf.seek(0)
     element.update(data=buf.read())
     return canv 
+
+def get_cam_conf(option_cam_predef, option_cam_custom, cam_conf_predef, custom_s1, custom_s2, custom_pixel_size, custom_focal_distance):
+    if option_cam_predef: 
+        s1 = cameras.get_camera(cam_conf_predef,"s1")
+        s2 = cameras.get_camera(cam_conf_predef,'s2')
+        pixel_size = cameras.get_camera(cam_conf_predef,'pixel_size')
+        focal_distance = cameras.get_camera(cam_conf_predef,'focal_distance')            
+        
+    if option_cam_custom:
+        s1 = int(custom_s1)
+        s2 = int(custom_s2)
+        pixel_size = float(custom_pixel_size)
+        focal_distance = float(custom_focal_distance)
+    
+    return (s1, s2, pixel_size, focal_distance)
+
+def get_orientation(e_w, w_e):
+    if e_w: return -1 
+    if w_e: return 1    
 
 sg.theme('SystemDefault1')
 
@@ -112,7 +131,7 @@ column_input = [
      sg.Radio('Configuração manual', "RADIO2", key='option_cam_custom')],
     
     [sg.Text('Modelos/configurações predefinidas:', font=("Helvetica", 8)), 
-     sg.Combo(predef_cameras, key='cam_conf_predef', default_value = predef_cameras[0], size=(20, 1)),
+     sg.Combo(predef_cameras_names, key='cam_conf_predef', default_value = predef_cameras_names[0], size=(20, 1)),
      
      sg.Col(column_cam_conf_manual, background_color='gray34')],
     [sg.Button('Submeter', button_color=("white")), sg.Button('Sair', button_color=("red"))],
@@ -141,74 +160,3 @@ layout = [
     [sg.Col(column_input),
      sg.Col(column_output, key=('-OUTPUT-'), visible=False)]
     ]
-
-window = sg.Window('Plano de voo', layout)
-
-image_element = window['-IMAGE-']       # type: sg.Image
-
-while True:
-    event, io_values = window.read()
-    
-    if event == 'SaveTXT':
-        filename = sg.popup_get_file('Guardar KML', no_window=True)
-        window.SaveToDisk(filename)
-        # save(io_values)        
-    elif event == 'SaveKML':
-        filename = sg.popup_get_file('Guardar KML', no_window=True)
-        window.SaveToDisk(filename)
-        # load(form)
-    elif event == 'Submeter':
-        
-        P1 = (float(io_values['P1_x']), float(io_values['P1_y']))
-        P2 = (float(io_values['P2_x']), float(io_values['P2_y']))
-        P3 = (float(io_values['P3_x']), float(io_values['P3_y']))
-        P4 = (float(io_values['P4_x']), float(io_values['P4_y']))
-        
-        area = calc.get_area(P1, P2, P3, P4)
-                        
-        q = float(io_values['q'])
-        l = float(io_values['l'])
-        
-        mf = float(io_values['mf'])
-        
-        cota_media = float(io_values['cota_media'])
-        
-        unit_cost_foto = float(io_values['unit_cost_foto'])
-        unit_cost_flight_hour = float(io_values['unit_cost_flight_hour'])
-        flight_speed = float(io_values['flight_speed'])
-        
-        if io_values['E-W']: orientation = -1 
-        if io_values['W-E']: orientation = 1
-        
-        if io_values['option_cam_predef']: 
-            s1 = cameras.get_camera(io_values['cam_conf_predef'],"s1")
-            s2 = cameras.get_camera(io_values['cam_conf_predef'],'s2')
-            pixel_size = cameras.get_camera(io_values['cam_conf_predef'],'pixel_size')
-            focal_distance = cameras.get_camera(io_values['cam_conf_predef'],'focal_distance')            
-            
-        if io_values['option_cam_custom']:
-            s1 = int(io_values['custom_s1'])
-            s2 = int(io_values['custom_s2'])
-            pixel_size = float(io_values['custom_pixel_size'])
-            focal_distance = float(io_values['custom_focal_distance'])
-
-        fotos = calc.get_plan_fotos(area, orientation, cota_media, s1, s2, mf, pixel_size, focal_distance, l, q)
-                
-        budget_values = calc.get_plan_budget(unit_cost_foto, unit_cost_flight_hour, flight_speed, s1, s2, pixel_size, mf, q, l, area, fotos)
-        
-        distance = round(budget_values[0], ndigits=1) # distancia total de voo na área a levantar em metros
-        flight_time = round(budget_values[1] * 60, ndigits=1) # tempo de voo em minutos
-        budget = round(budget_values[2], ndigits=1) # orçamento em Euro
-    
-        window['-OUTPUT-'].update(visible=True)
-       
-        window['distance'].update(distance)
-        window['flight_time'].update(flight_time)
-        window['budget'].update(budget)
-        
-        draw_figure(image_element, create_figure(area, fotos))
-        
-    elif event in ('Sair', None):
-        break
-
-window.close()
