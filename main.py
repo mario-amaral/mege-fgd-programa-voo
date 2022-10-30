@@ -15,16 +15,7 @@ def main():
     while True:
         event, values = window.read()
         
-        if event == 'SaveTXT':
-            filename = io_elements.sg.popup_get_file('Guardar KML', no_window=True)
-            window.SaveToDisk(filename)
-            # save(values)        
-        elif event == 'SaveKML':
-            #filename = sg.popup_get_file('Guardar KML', no_window=True)
-            window.SaveToDisk(filename)
-            # load(form)
-        elif event == 'Submeter':
-            
+        if event == 'Submeter':
             P1 = (float(values['P1_x']), float(values['P1_y']))
             P2 = (float(values['P2_x']), float(values['P2_y']))
             P3 = (float(values['P3_x']), float(values['P3_y']))
@@ -67,6 +58,16 @@ def main():
             window['budget'].update(budget)
             
             io_elements.draw_figure(image_element, io_elements.create_figure(area, fotos))
+            
+        elif event == 'SaveKML':
+            pass
+            #filename = sg.popup_get_file('Guardar KML', no_window=True)
+            # load(form)
+        elif event == 'SaveTXT':
+            filename = values['filename']
+            file_path = values['-USER_FOLDER-']
+            chosen_file_name = file_path + "/" + filename
+            io_elements.write_txt_file(chosen_file_name, fotos)
             
         elif event in ('Sair', None):
             break

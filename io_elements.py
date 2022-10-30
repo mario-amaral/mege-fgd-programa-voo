@@ -8,6 +8,8 @@ import PySimpleGUI as sg
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasAgg
 import io
+import simplekml
+import utm
 
 import cameras
 
@@ -71,6 +73,36 @@ def get_cam_conf(option_cam_predef, option_cam_custom, cam_conf_predef, custom_s
 def get_orientation(e_w, w_e):
     if e_w: return -1 
     if w_e: return 1    
+
+def write_txt_file(filename, fotos):
+    filename_txt = filename + '.txt'
+    with open(filename_txt, 'w') as file:
+          
+        for foto in fotos:
+            row_to_write = str(foto) + "\n"
+            file.write(row_to_write)
+            
+def write_kml_file(filename, fotos):
+    
+    #TO-DO: testar com pontos na zona de UTM 29 S
+    
+    kml = simplekml.Kml()
+    
+    for foto in fotos:
+        
+        point_name = 'F' + str(foto[0])
+        pnt = kml.newpoint(name= point_name, altitudemode=('absolute'))
+        
+        point_coord = utm.to_latlon(foto[1], foto[2], 29, zone_letter="S") #é necessário definir a zona e a letra da projeção UTM
+        lat = point_coord[0]
+        lon = point_coord[1]
+        height = foto[3]
+                
+        pnt.coords = [(lat,lon, height)]
+        pnt.style.labelstyle.color = simplekml.Color.red  # Make the text red
+        pnt.style.iconstyle.icon.href = 'http://maps.google.com/mapfiles/kml/shapes/placemark_circle.png'
+    
+    kml.save(filename)
 
 sg.theme('SystemDefault1')
 
@@ -153,6 +185,8 @@ column_output = [
     [sg.Text(' ')],
     
     [sg.Text('Guardar plano de voo:', font=("Helvetica", 9, "bold") , size=(35, 1))],
+    [sg.Text('Selectionar pasta:', font=("Helvetica", 8), size=(15, 1)),sg.Input(key='-USER_FOLDER-'), sg.FolderBrowse(target='-USER_FOLDER-')],
+    [sg.Text('Nome do ficheiro:', font=("Helvetica", 8), size=(15, 1)),sg.InputText('plano_de_voo', key='filename')],
     [sg.Button('SaveTXT'), sg.Button('SaveKML')],
     ]
 
