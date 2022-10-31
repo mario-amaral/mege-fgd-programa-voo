@@ -13,18 +13,35 @@ import utm
 
 import cameras
 
+P1_x_default = 484845
+P2_x_default = 488710
+P3_x_default = 484775
+P4_x_default = 488722
+
+P1_y_default = 4290518
+P2_y_default = 4290502
+P3_y_default = 4287816
+P4_y_default = 4287616
+
+s1_default = cameras.get_camera('DMC', 's1')
+s2_default = cameras.get_camera('DMC', 's2')
+pixel_size_default = cameras.get_camera('DMC', 'pixel_size')
+focal_distance_default = cameras.get_camera('DMC', 'focal_distance')
+
 predef_cameras_names = cameras.get_camera_model_names()
 
 budget = 0.
 flight_time = 0.
 distance = 0.
 
+sg.theme('DarkTeal10')
+
 def create_figure(area, fotos):
          
     area_to_plot = [area[0], area[1], area[2], area[3], area[0]] #formar polígono fechado da área a desenhar, com repetição do primeiro ponto na última posição da lista
     area_to_plot_xs, area_to_plot_ys = zip(*area_to_plot)
     
-    fig = Figure(figsize=(9, 6))    
+    fig = Figure(figsize=(7, 4))    
         
     ax = fig.add_subplot(111)
     
@@ -84,7 +101,7 @@ def write_txt_file(filename, fotos):
             
 def write_kml_file(filename, fotos):
     
-    #TO-DO: testar com pontos na zona de UTM 29 S
+    filename = filename + '.kml'
     
     kml = simplekml.Kml()
     
@@ -94,8 +111,8 @@ def write_kml_file(filename, fotos):
         pnt = kml.newpoint(name= point_name, altitudemode=('absolute'))
         
         point_coord = utm.to_latlon(foto[1], foto[2], 29, zone_letter="S") #é necessário definir a zona e a letra da projeção UTM
-        lat = point_coord[0]
-        lon = point_coord[1]
+        lon = point_coord[0]
+        lat = point_coord[1]
         height = foto[3]
                 
         pnt.coords = [(lat,lon, height)]
@@ -104,17 +121,15 @@ def write_kml_file(filename, fotos):
     
     kml.save(filename)
 
-sg.theme('SystemDefault1')
-
 column_cam_conf_manual = [
     [sg.Text('Dimensão do pixel [micro-m]', font=("Helvetica", 8), size=(30, 1)), 
-     sg.InputText('12', key='custom_pixel_size', size=(6,1),justification="right")],
+     sg.InputText(pixel_size_default, key='custom_pixel_size', size=(6,1),justification="right")],
     [sg.Text('Largura do sensor (s1) [px]', font=("Helvetica", 8), size=(30, 1)), 
-     sg.InputText('7680', key='custom_s1', size=(6,1),justification="right")],
+     sg.InputText(s1_default, key='custom_s1', size=(6,1),justification="right")],
     [sg.Text('Altura do sensor (s2) [px]', font=("Helvetica", 8), size=(30, 1)), 
-     sg.InputText('13824', key='custom_s2', size=(6,1),justification="right")],
+     sg.InputText(s2_default, key='custom_s2', size=(6,1),justification="right")],
     [sg.Text('Distância focal (c) [mm]', font=("Helvetica", 8), size=(30, 1)), 
-     sg.InputText('120', key='custom_focal_distance', size=(6,1),justification="right")],
+     sg.InputText(focal_distance_default, key='custom_focal_distance', size=(6,1),justification="right")],
     ]
 
 column_input = [
@@ -123,15 +138,15 @@ column_input = [
     
     [sg.Text('Area a levantar: Coordenadas dos vértices da área a levantar (em coordenadas UTM)', font=("Helvetica", 9, "bold"))],
     
-    [sg.Text('P1x [m]', font=("Helvetica", 8)), sg.InputText('1000', key='P1_x', size=(9,1),justification="right"), 
-     sg.Text('P2x [m]', font=("Helvetica", 8)), sg.InputText('5000', key='P2_x', size=(9,1),justification="right"), 
-     sg.Text('P3x [m]', font=("Helvetica", 8)), sg.InputText('1000', key='P3_x', size=(9,1),justification="right"), 
-     sg.Text('P4x [m]', font=("Helvetica", 8)), sg.InputText('5000', key='P4_x', size=(9,1),justification="right")], 
+    [sg.Text('P1x [m]', font=("Helvetica", 8)), sg.InputText(P1_x_default, key='P1_x', size=(9,1),justification="right"), 
+     sg.Text('P2x [m]', font=("Helvetica", 8)), sg.InputText(P2_x_default, key='P2_x', size=(9,1),justification="right"), 
+     sg.Text('P3x [m]', font=("Helvetica", 8)), sg.InputText(P3_x_default, key='P3_x', size=(9,1),justification="right"), 
+     sg.Text('P4x [m]', font=("Helvetica", 8)), sg.InputText(P4_x_default, key='P4_x', size=(9,1),justification="right")], 
     
-    [sg.Text('P1y [m]', font=("Helvetica", 8)),sg.InputText('10000', key='P1_y', size=(9,1),justification="right"), 
-     sg.Text('P2y [m]', font=("Helvetica", 8)), sg.InputText('10000', key='P2_y', size=(9,1),justification="right"), 
-     sg.Text('P3y [m]', font=("Helvetica", 8)), sg.InputText('13000', key='P3_y', size=(9,1),justification="right"), 
-     sg.Text('P4y [m]', font=("Helvetica", 8)), sg.InputText('13000', key='P4_y', size=(9,1),justification="right")],
+    [sg.Text('P1y [m]', font=("Helvetica", 8)),sg.InputText(P1_y_default, key='P1_y', size=(9,1),justification="right"), 
+     sg.Text('P2y [m]', font=("Helvetica", 8)), sg.InputText(P2_y_default, key='P2_y', size=(9,1),justification="right"), 
+     sg.Text('P3y [m]', font=("Helvetica", 8)), sg.InputText(P3_y_default, key='P3_y', size=(9,1),justification="right"), 
+     sg.Text('P4y [m]', font=("Helvetica", 8)), sg.InputText(P4_y_default, key='P4_y', size=(9,1),justification="right")],
     [sg.Text('Direção de voo:', font=("Helvetica", 8)), sg.Radio('E-W', "RADIO1", key='E-W', default=True), sg.Radio('W-E', "RADIO1", key='W-E')],
     
     [sg.Text('Cota média na área a levantar:', font=("Helvetica", 8)), sg.InputText('80', key='cota_media', size=(9,1),justification="right")],
@@ -166,7 +181,7 @@ column_input = [
      sg.Combo(predef_cameras_names, key='cam_conf_predef', default_value = predef_cameras_names[0], size=(20, 1)),
      
      sg.Col(column_cam_conf_manual, background_color='gray34')],
-    [sg.Button('Submeter', button_color=("white")), sg.Button('Sair', button_color=("red"))],
+    [sg.Button('Submeter'), sg.Button('Sair', button_color=("red"))],
     ]
 
 column_results_budget = [

@@ -60,13 +60,14 @@ def main():
             io_elements.draw_figure(image_element, io_elements.create_figure(area, fotos))
             
         elif event == 'SaveKML':
-            pass
-            #filename = sg.popup_get_file('Guardar KML', no_window=True)
-            # load(form)
+            filename = values['filename']
+            file_path = values['-USER_FOLDER-']
+            chosen_file_name = file_path + '/' + filename
+            io_elements.write_kml_file(chosen_file_name, fotos)
         elif event == 'SaveTXT':
             filename = values['filename']
             file_path = values['-USER_FOLDER-']
-            chosen_file_name = file_path + "/" + filename
+            chosen_file_name = file_path + '/' + filename
             io_elements.write_txt_file(chosen_file_name, fotos)
             
         elif event in ('Sair', None):
