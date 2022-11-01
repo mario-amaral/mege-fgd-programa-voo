@@ -4,6 +4,7 @@ Created on Sun Oct 30 13:56:16 2022
 Programa plano de voo: modulo main para execução do programa recorrendo aos modulos internos calc e io_elements.
 @author: Mario Amaral
 """
+from pathlib import Path
 
 import calc
 import io_elements
@@ -18,6 +19,11 @@ def main():
 
     # O elemento de imagem (widget do gráfico) é criado, mas só será apresentado quando o butão submeter for pressionado
     image_element = window['-IMAGE-']
+
+    # Valor de defeito para a pasta de execução do programa (para definir onde escrever os ficheiros txt e kml por
+    # caso o utilizador não defina uma pasta
+
+    default_file_path = Path.cwd()
 
     # loop de escuta de eventos de input:
     while True:
@@ -81,14 +87,17 @@ def main():
             
         elif event == 'SaveKML':
 
-            # ISSUE TO FIX: caso o programa corra a partir de executável .exe é necessário selecionar a pasta para
-            # poder escrever o ficheiro. Caso o programa corra no interpretador python, o ficheiro é escrito por defeito
-            # na mesma pasta do ficheiro main.py
+            # ISSUE TO FIX: falta acrescentar aviso ao utilizador caso não seja indicada uma pasta
 
             # Guarda ficheiro KML
 
             filename = values['filename']
+
             file_path = values['-USER_FOLDER-']
+
+            # caso o utilizador não defina uma pasta de destido, será usada a pasta de execução do programa
+            if file_path == '': file_path = str(default_file_path)
+
             chosen_file_name = file_path + '/' + filename
             io_elements.write_kml_file(chosen_file_name, fotos)
 
@@ -98,6 +107,10 @@ def main():
 
             filename = values['filename']
             file_path = values['-USER_FOLDER-']
+
+            # caso o utilizador não defina uma pasta de destido, será usada a pasta de execução do programa
+            if file_path == '': file_path = str(default_file_path)
+
             chosen_file_name = file_path + '/' + filename
             io_elements.write_txt_file(chosen_file_name, fotos)
             
