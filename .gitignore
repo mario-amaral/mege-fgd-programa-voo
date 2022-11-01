@@ -1,6 +1,7 @@
 #output files
 *.txt
 *.kml
+/.idea
 
 
 # Byte-compiled / optimized / DLL files

@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
 """
 Created on Sat Oct 29 13:22:18 2022
-
-@author: mario
+Programa plano de voo: modulo de cálculo
+Guarda num dicionário de python as configurações dos modelos de câmaras predefinidos
+@author: Mario Amaral
 """
 
 # Configurações predefinidas das câmaras digitais usando dicionários em python:
-# pixel_size: em micro-metros
-# Número de pixels dado por s2 x s1, com: 
-#    s1: largura do sensor (medido na horizontal) em px
-#    s2: comprimento do sensor (medido na vertical) em px
-# focal_distance: distancia focal
+# pixel_size: tamanha do pixel do sensor da câmara [micrometros]
+# Número de pixels dado por s2 x s1, com:
+#    s1: largura do sensor (medido na direção de voo) em px
+#    s2: comprimento do sensor (medido na perpendicular à direção de voo) em px
+# focal_distance: distancia focal [mm]
 
 camera_model = {
          'DMC': {
@@ -78,11 +79,13 @@ camera_model = {
     }
 
 def get_camera (model_name, parameter_name):
-    """ Retorna: valor do parametro e da camara. 
-        Recebe: model_name: nome da camara pre definida.
-                parameter_name: nome do parâmetro
+    """ Retorna valor do parametro e da camara.
+        :model_name: nome da camara pre definida.
+        :parameter_name: nome do parâmetro pretendido
     """
     return camera_model[model_name][parameter_name]
 
 def get_camera_model_names ():
+    """ Retorna lista de nomes dos modelos de câmaras predefinidos
+    """
     return list(camera_model.keys())

@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Oct 18 20:53:52 2022
-
-@author: mario
+Programa plano de voo: modulo de cálculo
+Contem as funções de cálculo do plano de voo com base nos dados de input do utilizador
+@author: Mario Amaral
 """
 
-import numpy as np
-
 def get_area(P1, P2, P3, P4):
-    """ Retorna lista com as coordenadas dos vértices da área a levantar. 
-        Recebe: P1...P4 - pontos que devem ser abrangidos pela área a levantar. 
+    """Retorna lista com as coordenadas dos vértices da área a levantar.
+       :P1...P4: pontos que devem ser abrangidos pela área a levantar Pi = (Pi_x, Pi_y)
     """
     #  Área a levantar (rectangular) definida por uma lista das coordenadas extremas dos quatro pontos (P1...P4) de modo a conter todos eles:
     #  
@@ -29,40 +28,43 @@ def get_area(P1, P2, P3, P4):
 # calculate flight plan
 
 def get_first_foto (area, orientation, h, S2, q, B):
-    """ Retorna: primeiro ponto de tomada de foto conforme a orientação de voo. 
-        Recebe: area: foto de partida.
-                Orientation - deverá ser negativo para voo E-W e qualquer outro valor para voo W-E
-                h - altura do primeiro ponto
-                S2 - comprimento da projeção da foto no solo (para determinação de F1_delta_y)
-                q - sobreposição vertical entre faixas (para determinação de F1_delta_y)
+    """ Função auxiliar de get_plan_fotos. Retorna primeiro ponto de tomada de foto conforme a orientação de voo.
+        :area: lista dos vértices da área a levantar
+        :orientation: valor negativo para voo E-W e valor zero ou positivo para voo W-E
+        :H: altura do primeiro ponto
+        :S2: comprimento da projeção da foto no solo (para determinação de F1_delta_y)
+        :q: sobreposição vertical entre faixas (para determinação de F1_delta_y)
     """
     # F1_delta_y dá-nos a distância entre a coordenada y da primeira foto e lado superior da area a levantar de modo a garantir uma margem de segurança de 20% de S2
     F1_delta_y = S2 * 0.3
     
-    # F1_starting_x dá-nos a coordenada x de partida da primeira foto de modo a garantir é capturada uma foto a uma distância B do limite lateral da área a levantar
+    # F1_starting_x dá-nos a coordenada x de partida da primeira foto de modo a garantir é capturada uma foto a uma
+    # distância B do limite lateral da área a levantar
     F1_starting_x = B
     
     if orientation <0: return (1, area[1][0] + F1_starting_x, area[1][1] - F1_delta_y, h) #caso orientação seja <0 (E-W), F1 toma a posição do vértice superior direito
     return (1, area[0][0] - F1_starting_x, area[0][1] - F1_delta_y, h) #caso orientação seja qualquer valor positivo (W-E), F1 toma a posição do vértice superior esquerdo
     
 def get_next_foto_faixa (foto, A, B):
-    """ Retorna: coordenadas da próxima foto numa fiada. 
-        Recebe: foto: foto de partida. 
-                A: incremento na coordenada y
-                B: incremento na x
+    """Função auxiliar de get_plan_fotos. Retorna coordenadas da próxima foto numa fiada.
+       :foto: foto de partida.
+       :A: distância entre faixas (incremento na coordenada y)
+       :B: distânmcia entre pontos de captura de foto na mesma faixa (incremento na coordenada x)
     """
     next_foto = (foto[0] + 1, foto[1] + B, foto[2] + A, foto[3])
     return next_foto
 
 def get_plan_fotos (area, orientation, cota_media, s1, s2, mf, pixel_size, focal_distance, l, q):
-    """ Retorna: lista de pontos de captura de fotografias (F1, F2, F3, ...). 
-        Recebe: area - area a levantar [a calcular através de get_area()] 
-                Orientation: [user input] deverá ser -1 para voo E-W e qualquer outro valor para voo W-E
-                cota_media: [user input] cota média da área a levantar
-                s1: [user input] largura do sensor (medido na horizontal) em px
-                s2: [user input] comprimento do sensor (medido na vertical) em px
-                focal_distance: [user input] distancia focal
-                pixel_size: [user input] em micro-metros
+    """ Retorna lista de pontos de captura de fotografias (F1, F2, F3, ...).
+        :area: area a levantar [a calcular através de get_area()]
+        :orientation: [user input] deverá ser -1 para voo E-W e qualquer outro valor para voo W-E
+        :s1: [user input] largura do sensor (medido na horizontal) em px
+        :s2: [user input] comprimento do sensor (medido na vertical) em px
+        :pixel_size: [user input] tamanha do pixel do sensor da câmara [micrometros]
+        :focal_distance: [user input] distancia focal
+        :mf: [user input] modulo da escala da foto
+        :l: [user input] sobreposição horizontal entre fotos do mesmo modelo
+        :q: [user input] sobreposição vertical entre fotos em faixas adjacentes
     """
     S1 = s1 * mf * pixel_size * 10**(-6) # largura do elemento da imagem (horizontal) medido no terreno. Valor em metros
     S2 = s2 * mf * pixel_size * 10**(-6) # comprimento do elemento da imagem (vertical) medido no terreno. Valor em metros
@@ -86,20 +88,26 @@ def get_plan_fotos (area, orientation, cota_media, s1, s2, mf, pixel_size, focal
             if i%2 == 0: fotos.append(get_next_foto_faixa(fotos[-1], 0, orientation * B)) 
             if i%2 == 1: fotos.append(get_next_foto_faixa(fotos[-1], 0, - orientation * B)) #nas fiadas pares a orientação é invertida
         fotos.append(get_next_foto_faixa(fotos[-1], -A, 0))
-    
-    fotos.pop(-1) # hack para remover último ponto introduzido de forma não intencional (aspeto a melhorar...)
+
+    # ISSUE TO FIX: hack para remover último ponto introduzido de forma não intencional (aspeto a melhorar...)
+    fotos.pop(-1)
     
     return fotos
 
 #calculate budget
 
 def get_plan_budget(unit_cost_foto, unit_cost_flight_hour, flight_speed, s1, s2, pixel_size, mf, q, l, area, fotos):
-    """ Retorna: (distancia, tempo, budget) distancia percorrida/duranção de voo no plano definido [km, h] e orçamento. 
-        Recebe: flight_speed - velocidade de voo [km/h]
-                A - distância entre faixas
-                B - distancia entre fotos numa faixa
-                nfx - número de fiadas
-                nm - numero de modelos por fiada
+    """ Retorna tuple (distancia, tempo, budget) valores aproximados de distancia percorrida[m] duração de voo no plano
+        definido [h] e orçamento [Euro].
+        :unit_cost_foto: custo unitário por foto [Euro]
+        :unit_cost_flight_hour: custo unitário por hora de voo [Euro]
+        :flight_speed: [user input] velocidade de voo [km/h]
+        :s1: [user input] largura do sensor (medido na direção de voo) [px]
+        :s2: [user input] comprimento do sensor (medido na perpendicular à direção de voo) [px]
+        :pixel_size: [user input] tamanha do pixel do sensor da câmara [micrometros]
+        :mf: [user input] modulo da escala da foto
+        :l: [user input] sobreposição horizontal entre fotos do mesmo modelo
+        :q: [user input] sobreposição vertical entre fotos em faixas adjacentes
     """
     S1 = s1 * mf * pixel_size * 10**(-6) # largura do elemento da imagem (horizontal) medido no terreno. Valor em metros
     S2 = s2 * mf * pixel_size * 10**(-6) # comprimento do elemento da imagem (vertical) medido no terreno. Valor em metros
@@ -115,9 +123,9 @@ def get_plan_budget(unit_cost_foto, unit_cost_flight_hour, flight_speed, s1, s2,
     
     # somamos: as (nfx + 2) distâncias de B percorridas entre pontos de tomada de foto em cada fiada + 
     # distância aproximada de mudança de faixa (dada pela semi-circunferência pi*A/2) para nfx-1 mudanças de faixa (valor em m) 
-    distance = nm * B * (nfx) + (np.pi/2.) * A * (nfx - 1)
+    distance = (nm + 1) * B * (nfx) + (3.141/2.) * A * (nfx - 1)
     
     time = distance / (flight_speed * 1000)
-    budget = nm * (nfx) * unit_cost_foto + time * unit_cost_flight_hour
+    budget = (nm + 1) * (nfx) * unit_cost_foto + time * unit_cost_flight_hour
     
     return (distance, time, budget)
