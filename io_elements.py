@@ -42,6 +42,9 @@ flight_speed_default = 350 #km/h
 unit_cost_foto_default = 25 #Euro/foto
 unit_cost_flight_hour_default = 2000 #Euro/hora
 
+UTM_zone_letter_default = 'S'
+UTM_zone_number_default = '29'
+
 predef_cameras_names = cameras.get_camera_model_names()
 
 # inicialização das variáveis de output (budget, flight_time e distance):
@@ -79,8 +82,8 @@ def create_figure(area, fotos):
         ax.text(f[1], f[2], 'F' + str(f[0]), ha="left")
 
     # insere legendas dos eixos
-    ax.set_xlabel("UTM Zone S 29: Easting [m]")
-    ax.set_ylabel("UTM Zone S 29: Northing [m]")
+    ax.set_xlabel("Easting [m]")
+    ax.set_ylabel("Northing [m]")
 
     return fig
 
@@ -145,10 +148,11 @@ def write_txt_file(filename, fotos):
             file.write(row_to_write)
 
 
-def write_kml_file(filename, fotos):
+def write_kml_file(filename, fotos, UTM_zone_letter, UTM_zone_number):
     """Escreve ficheiro kml com a lista de coordenadas dos pontos de captura de fotos.
         :filename: path do ficheiro para escrita em disco
         :fotos: lista dos pontos de captura de fotos
+        :UTM_zone_letter, UTM_zone_number: parâmetros necessários para a conversão em coordenadas elipsoidais
     """
     filename = filename + '.kml'
 
@@ -159,10 +163,9 @@ def write_kml_file(filename, fotos):
         pnt = kml.newpoint(name=point_name, altitudemode=('absolute'))
 
         # A biblioteca simpleKML apenas é capaz de produzir pontos com coordenadas elipsoidais, pelo que temos de
-        # converter primeiro de UTM para lat, lon.
-        # Assume-se que a zona UTM é a que corresponde a Lisboa (S29)
+        # converter primeiro de UTM para lat, lon. com base na zona UTM especificada
 
-        point_coord = utm.to_latlon(foto[1], foto[2], 29, zone_letter="S")
+        point_coord = utm.to_latlon(foto[1], foto[2], UTM_zone_number, zone_letter=UTM_zone_letter)
         lon = point_coord[0]
         lat = point_coord[1]
         height = foto[3]
@@ -216,11 +219,15 @@ column_input = [
      sg.InputText(P3_y_default, key='P3_y', size=(9, 1), justification="right"),
      sg.Text('P4y [m]', font=("Helvetica", 8)),
      sg.InputText(P4_y_default, key='P4_y', size=(9, 1), justification="right")],
+    [sg.Text('Letra da Zona UTM:', font=("Helvetica", 8)),
+     sg.InputText(UTM_zone_letter_default, key='UTM_zone_letter', size=(2, 1), justification="right"),
+     sg.Text('Número da Zona UTM:', font=("Helvetica", 8)),
+     sg.InputText(UTM_zone_number_default, key='UTM_zone_number', size=(3, 1), justification="right")],
     [sg.Text('Direção de voo:', font=("Helvetica", 8)), sg.Radio('E-W', "RADIO1", key='E-W', default=True),
      sg.Radio('W-E', "RADIO1", key='W-E')],
 
-    [sg.Text('Cota média na área a levantar:', font=("Helvetica", 8)),
-     sg.InputText('80', key='cota_media', size=(9, 1), justification="right")],
+    [sg.Text('Cota média na área a levantar [m]:', font=("Helvetica", 8)),
+     sg.InputText('80', key='cota_media', size=(4, 1), justification="right")],
 
     [sg.Text(' ')],
 

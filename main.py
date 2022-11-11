@@ -99,7 +99,9 @@ def main():
             if file_path == '': file_path = str(default_file_path)
 
             chosen_file_name = file_path + '/' + filename
-            io_elements.write_kml_file(chosen_file_name, fotos)
+            UTM_zone_letter = values['UTM_zone_letter']
+            UTM_zone_number = values['UTM_zone_number']
+            io_elements.write_kml_file(chosen_file_name, fotos, UTM_zone_letter, UTM_zone_number)
 
         elif event == 'SaveTXT':
 
