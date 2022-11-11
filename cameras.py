@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat Oct 29 13:22:18 2022
 Programa plano de voo: modulo de cálculo
 Guarda num dicionário de python as configurações dos modelos de câmaras predefinidos
 @author: Mario Amaral

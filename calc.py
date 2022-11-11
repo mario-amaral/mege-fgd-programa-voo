@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Oct 18 20:53:52 2022
 Programa plano de voo: modulo de cálculo
 Contem as funções de cálculo do plano de voo com base nos dados de input do utilizador
 @author: Mario Amaral
@@ -97,7 +96,7 @@ def get_plan_fotos (area, orientation, cota_media, s1, s2, mf, pixel_size, focal
 #calculate budget
 
 def get_plan_budget(unit_cost_foto, unit_cost_flight_hour, flight_speed, s1, s2, pixel_size, mf, q, l, area, fotos):
-    """ Retorna tuple (distancia, tempo, budget) valores aproximados de distancia percorrida[m] duração de voo no plano
+    """ Retorna tuple (distancia, tempo, budget) valores aproximados de distancia percorrida[km] duração de voo no plano
         definido [h] e orçamento [Euro].
         :unit_cost_foto: custo unitário por foto [Euro]
         :unit_cost_flight_hour: custo unitário por hora de voo [Euro]
@@ -123,9 +122,9 @@ def get_plan_budget(unit_cost_foto, unit_cost_flight_hour, flight_speed, s1, s2,
     
     # somamos: as (nfx + 2) distâncias de B percorridas entre pontos de tomada de foto em cada fiada + 
     # distância aproximada de mudança de faixa (dada pela semi-circunferência pi*A/2) para nfx-1 mudanças de faixa (valor em m) 
-    distance = (nm + 1) * B * (nfx) + (3.141/2.) * A * (nfx - 1)
+    distance = ((nm + 1) * B * (nfx) + (3.141/2.) * A * (nfx - 1))/1000 #em km
     
-    time = distance / (flight_speed * 1000)
+    time = distance / flight_speed
     budget = (nm + 1) * (nfx) * unit_cost_foto + time * unit_cost_flight_hour
     
     return (distance, time, budget)
